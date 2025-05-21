@@ -2,149 +2,275 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mavi's Beach Games</title>
+  <title>Mavi’s Games</title>
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body, html { width:100%; height:100%; font-family:'Segoe UI', sans-serif; background: linear-gradient(135deg,#a8edea 0%,#fed6e3 100%); display:flex; justify-content:center; align-items:center; }
-    #wrapper { width:400px; }
-    h1 { text-align:center; color:#fff; font-size:2.5rem; text-shadow:1px 1px 4px rgba(0,0,0,0.5); margin-bottom:1rem; }
-    .screen { display:none; }
-    .active { display:block; }
-    .button { background:rgba(255,255,255,0.85); color:#333; border-radius:12px; padding:1rem; margin:0.5rem 0; text-align:center; cursor:pointer; transition:0.2s; box-shadow:0 4px 8px rgba(0,0,0,0.2); }
-    .button:hover { background:rgba(255,255,255,1); transform:translateY(-3px); }
-    .button.disabled { background:#ccc; color:#666; cursor:default; }
-    /* Main Menu */
-    #mainMenu { position:relative; width:100%; height:300px; border-radius:12px; overflow:hidden; box-shadow:0 8px 16px rgba(0,0,0,0.2); background:url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=80')center/cover no-repeat; }
-    .overlay { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); display:flex; flex-direction:column; justify-content:center; align-items:center; padding:1rem; }
-    /* Difficulty Menu */
-    #diffMenu { position:relative; width:100%; height:300px; border-radius:12px; overflow:hidden; box-shadow:0 8px 16px rgba(0,0,0,0.2); background:url('https://images.unsplash.com/photo-1493558103817-58b2924bce98?auto=format&fit=crop&w=400&q=80')center/cover no-repeat; }
-    /* Game Screen */
-    #gameScreen { position:relative; width:100%; height:600px; border-radius:12px; overflow:hidden; box-shadow:0 8px 16px rgba(0,0,0,0.2); background:#87ceeb; }
-    canvas { display:block; background:linear-gradient(to bottom,#87ceeb 0%,#4ca0db 100%); }
-    #score { position:absolute; top:10px; left:10px; font-size:1.2rem; color:#fff; text-shadow:1px 1px 2px #000; }
-    #powerup { position:absolute; top:10px; right:10px; font-size:1rem; color:#fff; text-shadow:1px 1px 2px #000; }
-    #leaderboard { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem; border-radius:12px; }
-    #leaderboard button { width:70%; padding:0.75rem; font-size:1rem; margin:0.5rem 0; border:none; border-radius:8px; background:rgba(255,255,255,0.85); color:#333; box-shadow:0 4px 8px rgba(0,0,0,0.2); cursor:pointer; }
-    #leaderboard button:hover { background:rgba(255,255,255,1); }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #212336;
+      height: 100%;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      user-select: none;
+      overflow: hidden;
+    }
+    #main-menu, #gameselect-menu, #name-modal {
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 100;
+      background: rgba(20,20,30,0.98);
+      border-radius: 18px;
+      box-shadow: 0 6px 40px #000b;
+      padding: 32px 38px;
+      min-width: 340px;
+      color: #fff;
+      text-align: center;
+      display: none;
+    }
+    #main-menu.show, #gameselect-menu.show, #name-modal.show {
+      display: block;
+    }
+    #main-menu h1 {
+      font-family: 'Segoe UI Black', Arial, sans-serif;
+      color: #0cf;
+      font-size: 56px;
+      margin-bottom: 12px;
+      letter-spacing: 2px;
+      text-shadow: 0 4px 22px #0008;
+    }
+    #main-menu button, #gameselect-menu button, #name-modal button {
+      font-size: 27px;
+      padding: 13px 44px;
+      border-radius: 15px;
+      background: #f90;
+      color: #fff;
+      border: none;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-weight: bold;
+      margin: 16px 0 0 0;
+      box-shadow: 0 2px 10px #000b;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #main-menu button:hover, #gameselect-menu button:hover, #name-modal button:hover {
+      background: #fff;
+      color: #f90;
+    }
+    #main-menu .subtitle {
+      font-size: 22px;
+      color: #fff;
+      margin-bottom: 22px;
+      letter-spacing: 1.2px;
+    }
+    #gameselect-menu h2 {
+      font-size: 38px;
+      margin-bottom: 6px;
+      color: #0cf;
+      letter-spacing: 1.5px;
+    }
+    #gameselect-menu .games-list {
+      margin: 25px 0 10px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .game-btn {
+      font-size: 23px;
+      padding: 10px 0;
+      border-radius: 10px;
+      background: #0cf;
+      color: #fff;
+      border: none;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 4px;
+      transition: background 0.2s;
+      box-shadow: 0 2px 10px #0008;
+    }
+    .game-btn:hover { background: #fff; color: #0cf; }
+    .game-btn[disabled] {
+      background: #444;
+      color: #bbb;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    #gameselect-menu .comingsoon {
+      color: #fd0;
+      font-size: 16px;
+      margin-bottom: -4px;
+      font-style: italic;
+    }
+    #name-modal label {
+      font-size: 20px;
+      margin-bottom: 16px;
+      color: #fff;
+      display: block;
+    }
+    #name-input {
+      font-size: 24px;
+      padding: 9px 16px;
+      border-radius: 8px;
+      border: 2px solid #0cf;
+      outline: none;
+      width: 220px;
+      margin-bottom: 22px;
+      margin-top: 6px;
+      text-align: center;
+      background: #212336;
+      color: #fff;
+    }
+    #canvas-bg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      pointer-events: none;
+    }
+    #game-canvas {
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      background: #aaa;
+      border-radius: 20px;
+      box-shadow: 0 10px 48px #000b;
+      z-index: 2;
+      image-rendering: pixelated;
+      width: 420px;
+      height: 740px;
+      max-width: 98vw;
+      max-height: 94vh;
+      min-width: 260px;
+      min-height: 400px;
+      pointer-events: none;
+      display: none;
+    }
+    #game-ui, #char-select, #shop, #gameover, #pause {
+      z-index: 10;
+    }
+    @media (max-width: 600px) {
+      #game-canvas { width: 98vw; height: 70vw; min-width: 0; min-height: 0; }
+    }
   </style>
 </head>
 <body>
-  <div id="wrapper">
-    <h1>Mavi's Beach Games</h1>
-    <div class="screen active" id="mainMenu">
-      <div class="overlay">
-        <div class="button" id="playBtn">Subway Surfers</div>
-        <div class="button disabled">Coming Soon</div>
+  <canvas id="canvas-bg"></canvas>
+  <canvas id="game-canvas" width="420" height="740"></canvas>
+
+  <div id="main-menu" class="show">
+    <h1>Mavi’s Games</h1>
+    <div class="subtitle">Willkommen<span id="mainmenu-user"></span>!</div>
+    <button id="mainmenu-play-btn">Loslegen</button>
+    <div style="margin-top:32px;font-size:17px;color:#fff8;">v1.0 – Viel Spaß, Mavi!</div>
+  </div>
+  <div id="gameselect-menu">
+    <h2>Game-Auswahl</h2>
+    <div class="games-list">
+      <button class="game-btn" id="btn-subway">Subway Surfer</button>
+      <div>
+        <button class="game-btn" disabled>Snake</button>
+        <div class="comingsoon">Coming soon!</div>
+      </div>
+      <div>
+        <button class="game-btn" disabled>Flappy Bird</button>
+        <div class="comingsoon">Coming soon!</div>
+      </div>
+      <div>
+        <button class="game-btn" disabled>2048</button>
+        <div class="comingsoon">Coming soon!</div>
       </div>
     </div>
-    <div class="screen" id="diffMenu">
-      <div class="overlay">
-        <div class="button" data-diff="easy">Einfach</div>
-        <div class="button" data-diff="hard">Schwer</div>
-        <div class="button" data-diff="ultra">Ultra</div>
-      </div>
-    </div>
-    <div class="screen" id="gameScreen">
-      <canvas id="gameCanvas" width="400" height="600"></canvas>
-      <div id="score">Score: 0</div>
-      <div id="powerup">Power-up: None</div>
-      <div id="leaderboard" style="display:none;">
-        <h2>Highscores</h2>
-        <ol id="list"></ol>
-        <button id="restartBtn">Neustart</button>
-        <button id="menuBtn">Zum Menü</button>
-      </div>
-    </div>
+    <button style="font-size:18px;padding:8px 26px;border-radius:8px;background:#0cf;color:#fff;margin-top:8px;" id="gameselect-back">Zurück</button>
+  </div>
+  <div id="name-modal">
+    <form id="name-form" autocomplete="off">
+      <label for="name-input">Wie heißt du?</label>
+      <input id="name-input" type="text" maxlength="16" required placeholder="Dein Name...">
+      <br>
+      <button type="submit">Speichern</button>
+    </form>
   </div>
 
+  <!-- Subway Surfer UI/Modals werden dynamisch später eingefügt! -->
+
   <script>
-    const mainMenu = document.getElementById('mainMenu');
-    const diffMenu = document.getElementById('diffMenu');
-    const gameScreen = document.getElementById('gameScreen');
-    const playBtn = document.getElementById('playBtn');
-    const diffBtns = document.querySelectorAll('[data-diff]');
-    const leaderboard = document.getElementById('leaderboard');
-    const restartBtn = document.getElementById('restartBtn');
-    const menuBtn = document.getElementById('menuBtn');
-    const scoreEl = document.getElementById('score');
-    const powerupEl = document.getElementById('powerup');
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
+  // ==== Name & Menü-Logik ====
+  let userName = localStorage.getItem("mavisgames_username") || "";
+  const mainMenu = document.getElementById("main-menu");
+  const mainMenuUser = document.getElementById("mainmenu-user");
+  const nameModal = document.getElementById("name-modal");
+  const nameInput = document.getElementById("name-input");
+  const nameForm = document.getElementById("name-form");
+  const gameSelectMenu = document.getElementById("gameselect-menu");
+  const btnSubway = document.getElementById("btn-subway");
+  const gameCanvas = document.getElementById("game-canvas");
+  const canvasBg = document.getElementById("canvas-bg");
+  let inGame = false;
 
-    let difficulty = 'hard';
-    playBtn.onclick = () => { mainMenu.classList.remove('active'); diffMenu.classList.add('active'); };
-    diffBtns.forEach(btn => btn.onclick = () => { difficulty = btn.dataset.diff; diffMenu.classList.remove('active'); startGame(); });
-    restartBtn.onclick = () => { leaderboard.style.display = 'none'; startGame(); };
-    menuBtn.onclick = () => location.reload();
+  function showMainMenu() {
+    inGame = false;
+    gameCanvas.style.display = "none";
+    mainMenu.classList.add("show");
+    gameSelectMenu.classList.remove("show");
+    mainMenuUser.textContent = userName ? `, ${userName}` : "";
+  }
+  function showGameSelect() {
+    mainMenu.classList.remove("show");
+    gameSelectMenu.classList.add("show");
+  }
+  function showNameModal(force=false) {
+    nameModal.classList.add("show");
+    mainMenu.classList.remove("show");
+    gameSelectMenu.classList.remove("show");
+    if (!force && userName) nameInput.value = userName;
+    setTimeout(()=>nameInput.focus(), 200);
+  }
+  function setName(name) {
+    userName = name.trim().slice(0,16);
+    localStorage.setItem("mavisgames_username", userName);
+    nameModal.classList.remove("show");
+    showMainMenu();
+  }
+  // Initiale Namensabfrage
+  window.addEventListener('DOMContentLoaded', ()=>{
+    if (!userName) showNameModal();
+    else showMainMenu();
+  });
+  // Namens-Formular
+  nameForm.onsubmit = (e) => {
+    e.preventDefault();
+    if (nameInput.value.trim()) setName(nameInput.value);
+  };
+  // Menü-Buttons
+  document.getElementById("mainmenu-play-btn").onclick = showGameSelect;
+  document.getElementById("gameselect-back").onclick = showMainMenu;
+  btnSubway.onclick = () => {
+    inGame = true;
+    gameSelectMenu.classList.remove("show");
+    startSubwaySurfer();
+  };
+  // Name per Klick ändern
+  mainMenuUser.onclick = () => showNameModal(true);
 
-    const playerName = localStorage.getItem('runnerName') || 'Gast';
-    let scores = JSON.parse(localStorage.getItem('runnerScores') || '[]');
-    function saveHighscore(s) {
-      const ex = scores.find(e => e.name === playerName);
-      if (ex) { if (s > ex.score) ex.score = s; }
-      else scores.push({ name: playerName, score: s });
-      localStorage.setItem('runnerScores', JSON.stringify(scores));
-    }
-    function showHighscores() {
-      const list = document.getElementById('list'); list.innerHTML = '';
-      scores.sort((a, b) => b.score - a.score).slice(0, 5).forEach(e => {
-        const li = document.createElement('li'); li.textContent = `${e.name}: ${e.score}`; list.append(li);
-      });
-      leaderboard.style.display = 'flex';
-    }
+  // Optional: Name beim Klick auf Begrüßung ändern
+  mainMenuUser.style.textDecoration = "underline";
+  mainMenuUser.style.cursor = "pointer";
+  mainMenuUser.title = "Klicke, um deinen Namen zu ändern";
 
-    function startGame() {
-      gameScreen.classList.add('active');
-      scoreEl.textContent = 'Score: 0'; powerupEl.textContent = 'Power-up: None'; leaderboard.style.display = 'none';
-      const lanes = [100, 200, 300]; let currentLane = 1;
-      let obstacles = [], powerups = [];
-      let spawnObsTimer = 0, spawnPUtimer = 0, score = 0, over = false;
-      let speed, spawnRate;
-      if (difficulty === 'easy') { speed = 2; spawnRate = 200; }
-      else if (difficulty === 'hard') { speed = 3; spawnRate = 100; }
-      else { speed = 4; spawnRate = 70; }
+  // ========== Subway-Surfer-Spiel und UI wird jetzt im nächsten Block eingefügt! ==========
 
-      function spawnObstacle() { obstacles.push({ x: lanes[Math.floor(Math.random() * 3)], y: -60, w: 40, h: 60 }); }
-      function spawnPowerup() { powerups.push({ x: lanes[Math.floor(Math.random() * 3)], y: -60, w: 30, h: 30, type: 'Slow' }); }
-      function rectsOverlap(a, b) {
-        return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
-      }
-      function update() {
-        if (over) return;
-        spawnObsTimer++; spawnPUtimer++;
-        if (spawnObsTimer > spawnRate) { spawnObstacle(); spawnObsTimer = 0; }
-        if (spawnPUtimer > 500) { spawnPowerup(); spawnPUtimer = 0; }
-        obstacles.forEach((o, i) => {
-          o.y += speed;
-          if (o.y > 600) { obstacles.splice(i, 1); score++; scoreEl.textContent = 'Score: ' + score; }
-          const player = { x: lanes[currentLane] - 20, y: 520 - 60, w: 40, h: 60 };
-          if (rectsOverlap(player, o)) { over = true; saveHighscore(score); showHighscores(); }
-        });
-        powerups.forEach((p, i) => {
-          p.y += speed;
-          if (p.y > 600) powerups.splice(i, 1);
-          const player = { x: lanes[currentLane] - 15, y: 520 - 30, w: 30, h: 30 };
-          if (rectsOverlap(player, p)) {
-            powerupEl.textContent = 'Power-up: ' + p.type;
-            speed = Math.max(1, speed - 1);
-            powerups.splice(i, 1);
-          }
-        });
-      }
-      function draw() {
-        ctx.clearRect(0, 0, 400, 600);
-        ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillRect(0, 520, 400, 80);
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
-        for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.moveTo(0, 520 + i * 16); ctx.lineTo(400, 520 + i * 16); ctx.stroke(); }
-        ctx.fillStyle = '#ff5555'; ctx.fillRect(lanes[currentLane] - 20, 520 - 60, 40, 60);
-        ctx.fillStyle = '#5555ff'; obstacles.forEach(o => ctx.fillRect(o.x - 20, o.y, o.w, o.h));
-        ctx.fillStyle = '#55ff55'; powerups.forEach(p => ctx.fillRect(p.x - 15, p.y, p.w, p.h));
-      }
-      function loop() { update(); draw(); if (!over) requestAnimationFrame(loop); }
-      window.onkeydown = e => { if (over) return; if (e.key === 'a' && currentLane > 0) currentLane--; if (e.key === 'd' && currentLane < 2) currentLane++; };
-      loop();
-    }
+  // Platzhalter für Spielstart
+  function startSubwaySurfer() {
+    // Das eigentliche Subway-Surfer-Spiel kommt in Teil 2.
+    // Hier wird das Menü ausgeblendet und das Spiel initialisiert.
+    mainMenu.classList.remove("show");
+    gameSelectMenu.classList.remove("show");
+    nameModal.classList.remove("show");
+    gameCanvas.style.display = "block";
+    // ... Weiter mit Subway-Surfer (siehe Teil 2)
+  }
+
   </script>
 </body>
 </html>
