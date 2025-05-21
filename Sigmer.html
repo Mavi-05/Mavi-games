@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mavi's Beach Games</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body, html { width:100%; height:100%; font-family:'Segoe UI', sans-serif; background: linear-gradient(135deg,#a8edea 0%,#fed6e3 100%); display:flex; justify-content:center; align-items:center; }
+    #wrapper { width:400px; }
+    h1 { text-align:center; color:#fff; font-size:2.5rem; text-shadow:1px 1px 4px rgba(0,0,0,0.5); margin-bottom:1rem; }
+    .screen { display:none; }
+    .active { display:block; }
+    .button { background:rgba(255,255,255,0.85); color:#333; border-radius:12px; padding:1rem; margin:0.5rem 0; text-align:center; cursor:pointer; transition:0.2s; box-shadow:0 4px 8px rgba(0,0,0,0.2); }
+    .button:hover { background:rgba(255,255,255,1); transform:translateY(-3px); }
+    .button.disabled { background:#ccc; color:#666; cursor:default; }
+    /* Main Menu */
+    #mainMenu { position:relative; width:100%; height:300px; border-radius:12px; overflow:hidden; box-shadow:0 8px 16px rgba(0,0,0,0.2); background:url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=80')center/cover no-repeat; }
+    .overlay { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); display:flex; flex-direction:column; justify-content:center; align-items:center; padding:1rem; }
+    /* Difficulty Menu */
+    #diffMenu { position:relative; width:100%; height:300px; border-radius:12px; overflow:hidden; box-shadow:0 8px 16px rgba(0,0,0,0.2); background:url('https://images.unsplash.com/photo-1493558103817-58b2924bce98?auto=format&fit=crop&w=400&q=80')center/cover no-repeat; }
+    /* Game Screen */
+    #gameScreen { position:relative; width:100%; height:600px; border-radius:12px; overflow:hidden; box-shadow:0 8px 16px rgba(0,0,0,0.2); background:#87ceeb; }
+    canvas { display:block; background:linear-gradient(to bottom,#87ceeb 0%,#4ca0db 100%); }
+    #score { position:absolute; top:10px; left:10px; font-size:1.2rem; color:#fff; text-shadow:1px 1px 2px #000; }
+    #powerup { position:absolute; top:10px; right:10px; font-size:1rem; color:#fff; text-shadow:1px 1px 2px #000; }
+    #leaderboard { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem; border-radius:12px; }
+    #leaderboard button { width:70%; padding:0.75rem; font-size:1rem; margin:0.5rem 0; border:none; border-radius:8px; background:rgba(255,255,255,0.85); color:#333; box-shadow:0 4px 8px rgba(0,0,0,0.2); cursor:pointer; }
+    #leaderboard button:hover { background:rgba(255,255,255,1); }
+  </style>
+</head>
+<body>
+  <div id="wrapper">
+    <h1>Mavi's Beach Games</h1>
+    <div class="screen active" id="mainMenu">
+      <div class="overlay">
+        <div class="button" id="playBtn">Subway Surfers</div>
+        <div class="button disabled">Coming Soon</div>
+      </div>
+    </div>
+    <div class="screen" id="diffMenu">
+      <div class="overlay">
+        <div class="button" data-diff="easy">Einfach</div>
+        <div class="button" data-diff="hard">Schwer</div>
+        <div class="button" data-diff="ultra">Ultra</div>
+      </div>
+    </div>
+    <div class="screen" id="gameScreen">
+      <canvas id="gameCanvas" width="400" height="600"></canvas>
+      <div id="score">Score: 0</div>
+      <div id="powerup">Power-up: None</div>
+      <div id="leaderboard" style="display:none;">
+        <h2>Highscores</h2>
+        <ol id="list"></ol>
+        <button id="restartBtn">Neustart</button>
+        <button id="menuBtn">Zum Menü</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const mainMenu = document.getElementById('mainMenu');
+    const diffMenu = document.getElementById('diffMenu');
+    const gameScreen = document.getElementById('gameScreen');
+    const playBtn = document.getElementById('playBtn');
+    const diffBtns = document.querySelectorAll('[data-diff]');
+    const leaderboard = document.getElementById('leaderboard');
+    const restartBtn = document.getElementById('restartBtn');
+    const menuBtn = document.getElementById('menuBtn');
+    const scoreEl = document.getElementById('score');
+    const powerupEl = document.getElementById('powerup');
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let difficulty = 'hard';
+    playBtn.onclick = () => { mainMenu.classList.remove('active'); diffMenu.classList.add('active'); };
+    diffBtns.forEach(btn => btn.onclick = () => { difficulty = btn.dataset.diff; diffMenu.classList.remove('active'); startGame(); });
+    restartBtn.onclick = () => { leaderboard.style.display = 'none'; startGame(); };
+    menuBtn.onclick = () => location.reload();
+
+    const playerName = localStorage.getItem('runnerName') || 'Gast';
+    let scores = JSON.parse(localStorage.getItem('runnerScores') || '[]');
+    function saveHighscore(s) {
+      const ex = scores.find(e => e.name === playerName);
+      if (ex) { if (s > ex.score) ex.score = s; }
+      else scores.push({ name: playerName, score: s });
+      localStorage.setItem('runnerScores', JSON.stringify(scores));
+    }
+    function showHighscores() {
+      const list = document.getElementById('list'); list.innerHTML = '';
+      scores.sort((a, b) => b.score - a.score).slice(0, 5).forEach(e => {
+        const li = document.createElement('li'); li.textContent = `${e.name}: ${e.score}`; list.append(li);
+      });
+      leaderboard.style.display = 'flex';
+    }
+
+    function startGame() {
+      gameScreen.classList.add('active');
+      scoreEl.textContent = 'Score: 0'; powerupEl.textContent = 'Power-up: None'; leaderboard.style.display = 'none';
+      const lanes = [100, 200, 300]; let currentLane = 1;
+      let obstacles = [], powerups = [];
+      let spawnObsTimer = 0, spawnPUtimer = 0, score = 0, over = false;
+      let speed, spawnRate;
+      if (difficulty === 'easy') { speed = 2; spawnRate = 150; }
+      else if (difficulty === 'hard') { speed = 3; spawnRate = 100; }
+      else { speed = 4; spawnRate = 70; }
+
+      function spawnObstacle() { obstacles.push({ x: lanes[Math.floor(Math.random() * 3)], y: -60, w: 40, h: 60 }); }
+      function spawnPowerup() { powerups.push({ x: lanes[Math.floor(Math.random() * 3)], y: -60, w: 30, h: 30, type: 'Slow' }); }
+      function rectsOverlap(a, b) {
+        return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+      }
+      function update() {
+        if (over) return;
+        spawnObsTimer++; spawnPUtimer++;
+        if (spawnObsTimer > spawnRate) { spawnObstacle(); spawnObsTimer = 0; }
+        if (spawnPUtimer > 500) { spawnPowerup(); spawnPUtimer = 0; }
+        obstacles.forEach((o, i) => {
+          o.y += speed;
+          if (o.y > 600) { obstacles.splice(i, 1); score++; scoreEl.textContent = 'Score: ' + score; }
+          const player = { x: lanes[currentLane] - 20, y: 520 - 60, w: 40, h: 60 };
+          if (rectsOverlap(player, o)) { over = true; saveHighscore(score); showHighscores(); }
+        });
+        powerups.forEach((p, i) => {
+          p.y += speed;
+          if (p.y > 600) powerups.splice(i, 1);
+          const player = { x: lanes[currentLane] - 15, y: 520 - 30, w: 30, h: 30 };
+          if (rectsOverlap(player, p)) {
+            powerupEl.textContent = 'Power-up: ' + p.type;
+            speed = Math.max(1, speed - 1);
+            powerups.splice(i, 1);
+          }
+        });
+      }
+      function draw() {
+        ctx.clearRect(0, 0, 400, 600);
+        ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillRect(0, 520, 400, 80);
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+        for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.moveTo(0, 520 + i * 16); ctx.lineTo(400, 520 + i * 16); ctx.stroke(); }
+        ctx.fillStyle = '#ff5555'; ctx.fillRect(lanes[currentLane] - 20, 520 - 60, 40, 60);
+        ctx.fillStyle = '#5555ff'; obstacles.forEach(o => ctx.fillRect(o.x - 20, o.y, o.w, o.h));
+        ctx.fillStyle = '#55ff55'; powerups.forEach(p => ctx.fillRect(p.x - 15, p.y, p.w, p.h));
+      }
+      function loop() { update(); draw(); if (!over) requestAnimationFrame(loop); }
+      window.onkeydown = e => { if (over) return; if (e.key === 'a' && currentLane > 0) currentLane--; if (e.key === 'd' && currentLane < 2) currentLane++; };
+      loop();
+    }
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
