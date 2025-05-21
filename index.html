@@ -3,187 +3,111 @@
 <head>
   <meta charset="UTF-8">
   <title>Mavi’s Games</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: #212336;
-      height: 100%;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      user-select: none;
-      overflow: hidden;
+    html, body { margin:0; padding:0; background:linear-gradient(135deg,#23284a 0%,#2e3573 100%); height:100%; font-family:'Segoe UI',Arial,sans-serif; user-select:none; overflow:hidden;}
+    #canvas-bg { position:absolute; top:0; left:0; width:100vw; height:100vh; z-index:1; pointer-events:none;}
+    #game-canvas { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); background:rgba(240,240,250,0.82); border-radius:24px; box-shadow:0 10px 48px #000b; z-index:2; image-rendering:pixelated; width:420px; height:740px; max-width:98vw; max-height:94vh; min-width:260px; min-height:400px; pointer-events:none; display:none;}
+    .card-modal { position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); border-radius:20px; background:linear-gradient(135deg,#243063 50%,#33418d 100%); box-shadow:0 10px 36px #000b; min-width:330px; max-width:90vw; color:#fff; text-align:center; padding:34px 36px 38px 36px; z-index:200; display:none;}
+    .card-modal.show { display:block; animation:fadeIn 0.5s;}
+    @keyframes fadeIn { from{opacity:0; transform:translate(-50%,-60%);} to{opacity:1; transform:translate(-50%,-50%);} }
+    #main-menu { background:linear-gradient(135deg,#23284a 0%,#33418d 100%); box-shadow:0 10px 36px #000b;}
+    #main-menu h1 { color:#0cf; font-size:56px; margin-bottom:12px; letter-spacing:2px; text-shadow:0 4px 22px #0008;}
+    #main-menu .subtitle { font-size:22px; color:#fff; margin-bottom:22px; letter-spacing:1.2px;}
+    #mainmenu-leaderboard-btn { background:#0cf;color:#fff;margin-left:10px;}
+    #mainmenu-leaderboard-btn:hover { background:#fff; color:#0cf;}
+    #gameselect-menu h2 { font-size:38px; margin-bottom:12px; color:#0cf; letter-spacing:1.5px;}
+    .games-list { margin:25px 0 10px 0; display:flex; flex-direction:column; gap:18px;}
+    .game-btn { font-size:23px; padding:13px 0; border-radius:12px; background:#0cf; color:#fff; border:none; box-shadow:0 2px 10px #0008; cursor:pointer; font-weight:bold; transition:background 0.2s; margin-bottom:4px;}
+    .game-btn:hover { background:#fff; color:#0cf;}
+    .game-btn[disabled] { background:#444; color:#bbb; cursor:not-allowed; box-shadow:none;}
+    .comingsoon { color:#fd0; font-size:15px; margin-bottom:-4px; font-style:italic;}
+    #name-modal label { font-size:20px; margin-bottom:16px; color:#fff; display:block;}
+    #name-input { font-size:24px; padding:9px 16px; border-radius:8px; border:2px solid #0cf; outline:none; width:220px; margin-bottom:22px; margin-top:6px; text-align:center; background:#23284a; color:#fff;}
+    .card-modal button, #main-menu button, #gameselect-menu button { font-size:22px; padding:13px 40px; border-radius:15px; background:#f90; color:#fff; border:none; font-weight:bold; margin:18px 6px 0 6px; box-shadow:0 2px 10px #000b; cursor:pointer; transition:background 0.2s;}
+    .card-modal button:hover, #main-menu button:hover, #gameselect-menu button:hover { background:#fff; color:#f90;}
+    #shop h2 { margin-bottom:14px; color:#ffd700; letter-spacing:1.3px;}
+    .shop-item { margin:18px 0; padding:17px 0 11px 0; border-bottom:1px solid #3751a7; display:flex; justify-content:space-between; align-items:center; gap:10px;}
+    .shop-item:last-child { border-bottom:none;}
+    .shop-btn-buy { background:#ffd700; border:none; color:#23284a; border-radius:8px; padding:6px 20px; font-size:18px; font-weight:bold; cursor:pointer; transition:background 0.2s;}
+    .shop-btn-buy:disabled { opacity:0.6; cursor:not-allowed;}
+    #char-select h2 { margin-top:0; margin-bottom:12px; color:#0cf;}
+    #char-list { display:flex; gap:28px; justify-content:center; margin:30px 0 10px 0;}
+    .char-icon { width:75px; height:75px; border-radius:50%; border:3px solid #fff8; background:#3a4e7d; cursor:pointer; transition:transform 0.2s, border 0.2s; display:flex; align-items:center; justify-content:center; font-size:38px; box-shadow:0 2px 8px #0008;}
+    .char-icon.selected { border:4px solid #0ff; transform:scale(1.14); background:#0ff2;}
+    .char-name { font-size:19px; font-weight:bold; color:#fff; margin-top:8px;}
+    #gameover h1 { color:#fa3;font-size:44px;margin-bottom:10px;}
+    #pause h2 { color:#ffd700;}
+    #game-ui { pointer-events:none; background:none; box-shadow:none; padding:0;}
+    #score, #coins, #highscore, #powerup, #diff-ui { position:absolute; left:24px; top:18px; color:#fff; font-size:28px; font-weight:bold; letter-spacing:2px; text-shadow:0 2px 5px #000; pointer-events:none; background:none;}
+    #coins { top:60px; font-size:22px; color:#ffd700;}
+    #highscore { top:100px; font-size:17px; color:#0ff;}
+    #powerup { left:unset; right:26px; top:18px; color:#ff0; font-size:20px; text-align:right; min-width:160px;}
+    #diff-ui { left:unset; right:40px; top:52px; font-size:18px; font-weight:bold; color:#ffd700; text-shadow:0 2px 5px #000;}
+    #pause-btn, #restart-btn { position:absolute; right:24px; bottom:24px; z-index:20; padding:14px 28px; border:none; border-radius:12px; background:#0cf; color:#fff; font-size:22px; font-weight:bold; cursor:pointer; box-shadow:0 2px 8px #0008; transition:background 0.2s; pointer-events:all;}
+    #restart-btn { left:24px; right:unset; background:#f44;}
+    #pause-btn:hover, #restart-btn:hover { background:#fff; color:#222;}
+    #shop-btn { display:none !important;}
+    @media (max-width:600px) {
+      #game-canvas { width:98vw; height:70vw; min-width:0; min-height:0;}
+      #game-ui { font-size:13px;}
+      .card-modal, #main-menu { min-width:0; padding:18px 5vw 24px 5vw;}
     }
-    #main-menu, #gameselect-menu, #name-modal {
-      position: absolute;
-      left: 50%; top: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 100;
-      background: rgba(20,20,30,0.98);
-      border-radius: 18px;
-      box-shadow: 0 6px 40px #000b;
-      padding: 32px 38px;
-      min-width: 340px;
-      color: #fff;
-      text-align: center;
-      display: none;
-    }
-    #main-menu.show, #gameselect-menu.show, #name-modal.show {
-      display: block;
-    }
-    #main-menu h1 {
-      font-family: 'Segoe UI Black', Arial, sans-serif;
-      color: #0cf;
-      font-size: 56px;
-      margin-bottom: 12px;
-      letter-spacing: 2px;
-      text-shadow: 0 4px 22px #0008;
-    }
-    #main-menu button, #gameselect-menu button, #name-modal button {
-      font-size: 27px;
-      padding: 13px 44px;
-      border-radius: 15px;
-      background: #f90;
-      color: #fff;
-      border: none;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      font-weight: bold;
-      margin: 16px 0 0 0;
-      box-shadow: 0 2px 10px #000b;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    #main-menu button:hover, #gameselect-menu button:hover, #name-modal button:hover {
-      background: #fff;
-      color: #f90;
-    }
-    #main-menu .subtitle {
-      font-size: 22px;
-      color: #fff;
-      margin-bottom: 22px;
-      letter-spacing: 1.2px;
-    }
-    #gameselect-menu h2 {
-      font-size: 38px;
-      margin-bottom: 6px;
-      color: #0cf;
-      letter-spacing: 1.5px;
-    }
-    #gameselect-menu .games-list {
-      margin: 25px 0 10px 0;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
-    .game-btn {
-      font-size: 23px;
-      padding: 10px 0;
-      border-radius: 10px;
-      background: #0cf;
-      color: #fff;
-      border: none;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      font-weight: bold;
-      cursor: pointer;
-      margin-bottom: 4px;
-      transition: background 0.2s;
-      box-shadow: 0 2px 10px #0008;
-    }
-    .game-btn:hover { background: #fff; color: #0cf; }
-    .game-btn[disabled] {
-      background: #444;
-      color: #bbb;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-    #gameselect-menu .comingsoon {
-      color: #fd0;
-      font-size: 16px;
-      margin-bottom: -4px;
-      font-style: italic;
-    }
-    #name-modal label {
-      font-size: 20px;
-      margin-bottom: 16px;
-      color: #fff;
-      display: block;
-    }
-    #name-input {
-      font-size: 24px;
-      padding: 9px 16px;
-      border-radius: 8px;
-      border: 2px solid #0cf;
-      outline: none;
-      width: 220px;
-      margin-bottom: 22px;
-      margin-top: 6px;
-      text-align: center;
-      background: #212336;
-      color: #fff;
-    }
-    #canvas-bg {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: 1;
-      pointer-events: none;
-    }
-    #game-canvas {
-      position: absolute;
-      left: 50%; top: 50%;
-      transform: translate(-50%, -50%);
-      background: #aaa;
-      border-radius: 20px;
-      box-shadow: 0 10px 48px #000b;
-      z-index: 2;
-      image-rendering: pixelated;
-      width: 420px;
-      height: 740px;
-      max-width: 98vw;
-      max-height: 94vh;
-      min-width: 260px;
-      min-height: 400px;
-      pointer-events: none;
-      display: none;
-    }
-    #game-ui, #char-select, #shop, #gameover, #pause {
-      z-index: 10;
-    }
-    @media (max-width: 600px) {
-      #game-canvas { width: 98vw; height: 70vw; min-width: 0; min-height: 0; }
-    }
+    ::-webkit-scrollbar { width:0px; background:transparent;}
+    #diff-modal { background:linear-gradient(135deg,#224 40%,#33418d 100%); min-width:280px; padding-bottom:20px;}
+    #diff-modal h2 { margin-top:0;color:#ffd700;margin-bottom:18px;}
+    .diff-choice-btn { font-size:22px; padding:12px 38px; border-radius:15px; margin:14px 10px 0 10px; border:none; font-weight:bold; cursor:pointer; transition:background 0.18s; box-shadow:0 2px 10px #000b;}
+    .diff-choice-btn.easy { background:#0f7;color:#fff;}
+    .diff-choice-btn.hard { background:#fa3;color:#fff;}
+    .diff-choice-btn.ultra { background:#f00;color:#fff;}
+    .diff-choice-btn:hover { background:#fff;color:#222;}
+    #leaderboard-modal { background:linear-gradient(135deg,#243063 50%,#33418d 100%); min-width:320px;}
+    #leaderboard-modal h2 { color:#ffd700;margin-bottom:18px;}
+    #leaderboard-table { width:100%;border-collapse:collapse;margin:0 auto 14px auto;}
+    #leaderboard-table th, #leaderboard-table td { padding:7px 8px;}
+    #leaderboard-table th { color:#0cf; font-size:19px;}
+    #leaderboard-table td { font-size:18px;}
+    #leaderboard-table tr.top1 td {color:#ffd700;font-weight:bold;}
+    #leaderboard-table tr.top2 td {color:#b7d9ff;}
+    #leaderboard-table tr.top3 td {color:#ffa500;}
+    #leaderboard-table tr.me td {background:#0cf2;}
+    .life-ui { color:#f44;font-size:25px; margin-left:22px; letter-spacing:2px; display:inline-block; vertical-align:middle;}
   </style>
 </head>
 <body>
   <canvas id="canvas-bg"></canvas>
   <canvas id="game-canvas" width="420" height="740"></canvas>
-
-  <div id="main-menu" class="show">
+  <div id="main-menu" class="card-modal show">
     <h1>Mavi’s Games</h1>
     <div class="subtitle">Willkommen<span id="mainmenu-user"></span>!</div>
     <button id="mainmenu-play-btn">Loslegen</button>
-    <div style="margin-top:32px;font-size:17px;color:#fff8;">v1.0 – Viel Spaß, Mavi!</div>
+    <button id="mainmenu-shop-btn" style="background:#ffd700;color:#23284a;">🛒 Shop</button>
+    <button id="mainmenu-leaderboard-btn">🏆 Leaderboard</button>
+    <div style="margin-top:32px;font-size:17px;color:#fff8;">v1.5 – Viel Spaß, Mavi!</div>
   </div>
-  <div id="gameselect-menu">
+  <div id="gameselect-menu" class="card-modal">
     <h2>Game-Auswahl</h2>
     <div class="games-list">
       <button class="game-btn" id="btn-subway">Subway Surfer</button>
-      <div>
-        <button class="game-btn" disabled>Snake</button>
-        <div class="comingsoon">Coming soon!</div>
-      </div>
-      <div>
-        <button class="game-btn" disabled>Flappy Bird</button>
-        <div class="comingsoon">Coming soon!</div>
-      </div>
-      <div>
-        <button class="game-btn" disabled>2048</button>
-        <div class="comingsoon">Coming soon!</div>
-      </div>
+      <div><button class="game-btn" disabled>Snake</button><div class="comingsoon">Coming soon!</div></div>
+      <div><button class="game-btn" disabled>Flappy Bird</button><div class="comingsoon">Coming soon!</div></div>
+      <div><button class="game-btn" disabled>2048</button><div class="comingsoon">Coming soon!</div></div>
     </div>
     <button style="font-size:18px;padding:8px 26px;border-radius:8px;background:#0cf;color:#fff;margin-top:8px;" id="gameselect-back">Zurück</button>
   </div>
-  <div id="name-modal">
+  <div id="diff-modal" class="card-modal">
+    <h2>Schwierigkeit wählen</h2>
+    <button class="diff-choice-btn easy"   data-diff="easy">Einfach</button>
+    <button class="diff-choice-btn hard"   data-diff="hard">Schwer</button>
+    <button class="diff-choice-btn ultra"  data-diff="ultra">Ultra</button>
+    <div style="font-size:15px;margin-top:20px;color:#fff8;">Kann jederzeit neu gewählt werden</div>
+  </div>
+  <div id="leaderboard-modal" class="card-modal">
+    <h2>🏆 Leaderboard</h2>
+    <table id="leaderboard-table"></table>
+    <button id="leaderboard-close-btn" style="margin-top:8px;">Schließen</button>
+  </div>
+  <div id="name-modal" class="card-modal">
     <form id="name-form" autocomplete="off">
       <label for="name-input">Wie heißt du?</label>
       <input id="name-input" type="text" maxlength="16" required placeholder="Dein Name...">
@@ -191,12 +115,98 @@
       <button type="submit">Speichern</button>
     </form>
   </div>
-
-  <!-- Subway Surfer UI/Modals werden dynamisch später eingefügt! -->
-
+  <div id="game-ui">
+    <div id="score">Score: 0</div>
+    <span class="life-ui" id="life-ui"></span>
+    <div id="coins">💰 0</div>
+    <div id="powerup"></div>
+    <div id="highscore"></div>
+    <div id="diff-ui"></div>
+    <button id="pause-btn">⏸️ Pause</button>
+    <button id="restart-btn">🔄 Neustart</button>
+    <button id="shop-btn" style="display:none">🛒 Shop</button>
+  </div>
+  <div id="char-select" class="card-modal">
+    <h2>Wähle deinen Charakter,<br><span id="char-username"></span>!</h2>
+    <div id="char-list"></div>
+    <div id="char-info"></div>
+    <button id="char-start-btn" style="margin-top:20px;">Los geht's!</button>
+    <button id="char-shop-btn" style="background:#ffd700;color:#23284a;margin-top:10px;">🛒 Shop</button>
+    <button id="char-abort-btn" style="background:#eee;color:#23284a;margin-top:10px;">Zurück</button>
+  </div>
+  <div id="shop" class="card-modal">
+    <h2>Shop & Upgrades</h2>
+    <div id="shop-items"></div>
+    <button id="shop-close-btn" style="margin-top:20px;">Zurück</button>
+  </div>
+  <div id="gameover" class="card-modal">
+    <h1>Game Over</h1>
+    <div id="gameover-stats"></div>
+    <button id="gameover-restart-btn" style="margin-top:24px;">Nochmal!</button>
+    <button id="gameover-menu-btn" style="margin-left:18px;margin-top:24px;">Menü</button>
+    <button id="gameover-shop-btn" style="background:#ffd700;color:#23284a;margin-left:18px;margin-top:24px;">🛒 Shop</button>
+  </div>
+  <div id="pause" class="card-modal">
+    <h2>Pause</h2>
+    <p>Drücke <b>Fortsetzen</b> zum Weiterspielen.</p>
+    <button id="pause-resume-btn" style="margin-top:20px;">Fortsetzen</button>
+    <button id="pause-menu-btn" style="margin-left:18px;margin-top:12px;">Menü</button>
+  </div>
   <script>
-  // ==== Name & Menü-Logik ====
+  // --- Leaderboard Logic ---
+  function getLeaderboard() {
+    let lb = [];
+    try { lb = JSON.parse(localStorage.getItem("mavisgames_leaderboard")||"[]"); } catch(e){}
+    return Array.isArray(lb)?lb:[];
+  }
+  function saveLeaderboard(lb) {
+    localStorage.setItem("mavisgames_leaderboard", JSON.stringify(lb));
+  }
+  function addToLeaderboard(name, score) {
+    let lb = getLeaderboard();
+    let user = lb.find(e => e.name === name);
+    if (!user) lb.push({name, score});
+    else if (score > user.score) user.score = score;
+    saveLeaderboard(lb);
+  }
+  function showLeaderboard() {
+    const modal = document.getElementById("leaderboard-modal");
+    const table = document.getElementById("leaderboard-table");
+    let lb = getLeaderboard().sort((a,b)=>b.score-a.score).slice(0,10);
+    let me = userName;
+    let html = `<tr><th>Platz</th><th>Name</th><th>Score</th></tr>`;
+    lb.forEach((e,i)=>{
+      let cls = "";
+      if(i==0)cls="top1";
+      else if(i==1)cls="top2";
+      else if(i==2)cls="top3";
+      if(e.name===me)cls+=" me";
+      html += `<tr class="${cls}"><td>${i+1}</td><td>${e.name}</td><td>${e.score}</td></tr>`;
+    });
+    if(lb.findIndex(e=>e.name===me)===-1) {
+      let myScore = getLeaderboard().find(e=>e.name===me)?.score || 0;
+      html += `<tr class="me"><td>-</td><td>${me}</td><td>${myScore}</td></tr>`;
+    }
+    table.innerHTML = html;
+    modal.classList.add("show");
+  }
+  document.getElementById("mainmenu-leaderboard-btn").onclick = showLeaderboard;
+  document.getElementById("leaderboard-close-btn").onclick = ()=>document.getElementById("leaderboard-modal").classList.remove("show");
+
+  // --- Name, Menu, Difficulty ---
   let userName = localStorage.getItem("mavisgames_username") || "";
+  let gameSettings = JSON.parse(localStorage.getItem("mavisgames_settings")||"null") || {
+    player: 0,
+    upgrades: { magnet: 0, shield: 0, life: 0, slowmo: 0, coin: 0 },
+    coins: 0,
+    hiscore: 0
+  };
+  let gameDifficulty = localStorage.getItem("mavisgames_difficulty") || "easy";
+  const DIFFICULTY_PRESETS = {
+    easy:   { name: "Einfach", color: "#0f7", speed: 2.1, spawn: 65, coin: 0.85, powerup: 340, coinMulti: 2, label: "🌱 Einfach" },
+    hard:   { name: "Schwer", color: "#fa3", speed: 3.0, spawn: 45, coin: 0.55, powerup: 180, coinMulti: 1.4, label: "🔥 Schwer" },
+    ultra:  { name: "Ultra",  color: "#f00", speed: 4.0, spawn: 30, coin: 0.28, powerup: 85, coinMulti: 1, label: "💀 Ultra" }
+  };
   const mainMenu = document.getElementById("main-menu");
   const mainMenuUser = document.getElementById("mainmenu-user");
   const nameModal = document.getElementById("name-modal");
@@ -204,25 +214,29 @@
   const nameForm = document.getElementById("name-form");
   const gameSelectMenu = document.getElementById("gameselect-menu");
   const btnSubway = document.getElementById("btn-subway");
+  const diffModal = document.getElementById("diff-modal");
   const gameCanvas = document.getElementById("game-canvas");
   const canvasBg = document.getElementById("canvas-bg");
   let inGame = false;
-
   function showMainMenu() {
     inGame = false;
     gameCanvas.style.display = "none";
     mainMenu.classList.add("show");
     gameSelectMenu.classList.remove("show");
+    diffModal.classList.remove("show");
+    document.getElementById("gameover").classList.remove("show");
     mainMenuUser.textContent = userName ? `, ${userName}` : "";
   }
   function showGameSelect() {
     mainMenu.classList.remove("show");
     gameSelectMenu.classList.add("show");
+    diffModal.classList.remove("show");
   }
   function showNameModal(force=false) {
     nameModal.classList.add("show");
     mainMenu.classList.remove("show");
     gameSelectMenu.classList.remove("show");
+    diffModal.classList.remove("show");
     if (!force && userName) nameInput.value = userName;
     setTimeout(()=>nameInput.focus(), 200);
   }
@@ -232,45 +246,471 @@
     nameModal.classList.remove("show");
     showMainMenu();
   }
-  // Initiale Namensabfrage
   window.addEventListener('DOMContentLoaded', ()=>{
     if (!userName) showNameModal();
     else showMainMenu();
   });
-  // Namens-Formular
-  nameForm.onsubmit = (e) => {
-    e.preventDefault();
-    if (nameInput.value.trim()) setName(nameInput.value);
-  };
-  // Menü-Buttons
+  nameForm.onsubmit = (e) => { e.preventDefault(); if (nameInput.value.trim()) setName(nameInput.value); };
   document.getElementById("mainmenu-play-btn").onclick = showGameSelect;
   document.getElementById("gameselect-back").onclick = showMainMenu;
   btnSubway.onclick = () => {
     inGame = true;
     gameSelectMenu.classList.remove("show");
-    startSubwaySurfer();
+    showDiffOverlay();
   };
-  // Name per Klick ändern
   mainMenuUser.onclick = () => showNameModal(true);
-
-  // Optional: Name beim Klick auf Begrüßung ändern
   mainMenuUser.style.textDecoration = "underline";
   mainMenuUser.style.cursor = "pointer";
   mainMenuUser.title = "Klicke, um deinen Namen zu ändern";
+  document.getElementById("mainmenu-shop-btn").onclick = () => { mainMenu.classList.remove("show"); showShop(); };
+  function showDiffOverlay() { diffModal.classList.add("show"); }
+  diffModal.querySelectorAll('.diff-choice-btn').forEach(btn => {
+    btn.onclick = ()=>{
+      gameDifficulty = btn.getAttribute("data-diff");
+      localStorage.setItem("mavisgames_difficulty",gameDifficulty);
+      diffModal.classList.remove("show");
+      startSubwaySurfer();
+    }
+  });
 
-  // ========== Subway-Surfer-Spiel und UI wird jetzt im nächsten Block eingefügt! ==========
-
-  // Platzhalter für Spielstart
+  // --- Subway Surfer LOGIK ---
+  const GAME_W = 420, GAME_H = 740;
+  let ctx = null, bgCtx = null;
+  let animationFrame, state = "menu";
+  let runTime = 0, runSpeed = 3, level = 1, score = 0, coins = 0, hiscore = 0, collectedCoins = 0;
+  let powerup = null, powerupTimer = 0;
+  let lastLane = 1, lanes = [GAME_W/6, GAME_W/2, 5*GAME_W/6];
+  let touchStartX = null;
+  let diff = DIFFICULTY_PRESETS[gameDifficulty];
+  const CHARACTERS = [
+    { name: "Max", color: "#0cf", emoji: "🦸‍♂️", desc: "Held des Spiels! (leicht zu steuern)" },
+    { name: "Luna", color: "#f0c", emoji: "👧", desc: "Extra schnelle Sprünge." },
+    { name: "Robo", color: "#fc0", emoji: "🤖", desc: "Startet mit Schild." },
+    { name: "Ghosty", color: "#fff", emoji: "👻", desc: "Kann Hindernisse manchmal durchdringen." }
+  ];
+  const POWERUPS = [
+    { key:"magnet", name:"Magnet", color:"#f22", emoji:"🧲", desc:"Zieht Münzen heran." },
+    { key:"slowmo", name:"Slowmo", color:"#7cf", emoji:"⏳", desc:"Zeitlupe für kurze Zeit!" },
+    { key:"shield", name:"Schild", color:"#0ff", emoji:"🛡️", desc:"Schützt vor 1 Treffer." }
+  ];
+  const SHOP_ITEMS = [
+    { key:"magnet", name:"Magnet-Lvl", desc:"Magnet länger aktiv.", emoji:"🧲", cost:[60,120,280,600], max:4 },
+    { key:"shield", name:"Schild-Lvl", desc:"Schild hält länger.", emoji:"🛡️", cost:[70,130,340,700], max:4 },
+    { key:"life",   name:"Lebenspunkte", desc:"Starte mit mehr Leben!", emoji:"❤️", cost:[120,220,500,900], max:3 },
+    { key:"slowmo", name:"Slowmo-Trank", desc:"Slowmo länger aktiv.", emoji:"⏳", cost:[90,180,400,800], max:4 },
+    { key:"coin",   name:"Coin-Multi", desc:"Mehr Münzen pro Run.", emoji:"💰", cost:[100,220,520,1200], max:4 }
+  ];
+  const SFX = {
+    coin: new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YYwAAABhYWEAAP9aQAAAFgAA/w=='),
+    jump: new Audio('data:audio/wav;base64,UklGRiwAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YUgAAACAgACAgACAgA=='),
+    crash: new Audio('data:audio/wav;base64,UklGRtAAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YUAAAABhYQAA/1pAAABYAAD/'),
+    powerup: new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YYwAAABhYWEAAP9aQAAAFgAA/w=='),
+    button: new Audio('data:audio/wav;base64,UklGRiwAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YUgAAACAgACAgACAgA==')
+  };
+  const BGM = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YYwAAABhYWEAAP9aQAAAFgAA/w==');
+  BGM.loop = true; BGM.volume = 0.22;
+  let player = null, obstacles = [], coinsArr = [], powerupsArr = [];
   function startSubwaySurfer() {
-    // Das eigentliche Subway-Surfer-Spiel kommt in Teil 2.
-    // Hier wird das Menü ausgeblendet und das Spiel initialisiert.
-    mainMenu.classList.remove("show");
-    gameSelectMenu.classList.remove("show");
-    nameModal.classList.remove("show");
+    diff = DIFFICULTY_PRESETS[gameDifficulty];
+    ctx = gameCanvas.getContext("2d");
+    bgCtx = canvasBg.getContext("2d");
+    gameCanvas.width = GAME_W; gameCanvas.height = GAME_H;
+    canvasBg.width = window.innerWidth; canvasBg.height = window.innerHeight;
+    window.addEventListener("resize", ()=>{
+      canvasBg.width = window.innerWidth; canvasBg.height = window.innerHeight;
+      let ratio = Math.min(window.innerWidth / GAME_W, window.innerHeight / GAME_H, 1);
+      gameCanvas.style.width = (GAME_W*ratio) + "px";
+      gameCanvas.style.height = (GAME_H*ratio) + "px";
+    });
+    window.dispatchEvent(new Event("resize"));
+    runTime = 0; score = 0; coins = 0; collectedCoins = 0; level = 1;
+    powerup = null; powerupTimer = 0; lastLane = 1;
+    player = null; obstacles = []; coinsArr = []; powerupsArr = [];
+    gameSettings = JSON.parse(localStorage.getItem("mavisgames_settings")||"null") || gameSettings;
+    hiscore = gameSettings.hiscore||0;
+    document.getElementById("game-ui").classList.add("show");
+    document.getElementById("gameover").classList.remove("show");
+    document.getElementById("pause").classList.remove("show");
+    document.getElementById("shop").classList.remove("show");
+    document.getElementById("char-select").classList.add("show");
+    document.getElementById("char-username").textContent = userName;
+    renderCharSelect();
+    document.getElementById("char-start-btn").onclick = () => {
+      SFX.button.play();
+      document.getElementById("char-select").classList.remove("show");
+      startGame();
+    };
+    document.getElementById("char-shop-btn").onclick = () => { document.getElementById("char-select").classList.remove("show"); showShop("char-select"); };
+    document.getElementById("char-abort-btn").onclick = () => { document.getElementById("char-select").classList.remove("show"); showMainMenu(); };
+    document.getElementById("pause-btn").onclick = pauseGame;
+    document.getElementById("restart-btn").onclick = () => { SFX.button.play(); startSubwaySurfer(); };
+    document.getElementById("shop-btn").onclick = () => {};
+    document.getElementById("shop-close-btn").onclick = hideShop;
+    document.getElementById("gameover-restart-btn").onclick = () => { SFX.button.play(); startSubwaySurfer(); };
+    document.getElementById("gameover-menu-btn").onclick = () => {
+      SFX.button.play();
+      inGame = false;
+      document.getElementById("game-ui").classList.remove("show");
+      gameCanvas.style.display = "none";
+      document.getElementById("gameover").classList.remove("show");
+      showMainMenu();
+    };
+    document.getElementById("gameover-shop-btn").onclick = () => { document.getElementById("gameover").classList.remove("show"); showShop("gameover"); };
+    document.getElementById("pause-resume-btn").onclick = resumeGame;
+    document.getElementById("pause-menu-btn").onclick = () => {
+      SFX.button.play();
+      inGame = false;
+      document.getElementById("game-ui").classList.remove("show");
+      gameCanvas.style.display = "none";
+      document.getElementById("pause").classList.remove("show");
+      BGM.pause();
+      showMainMenu();
+    };
     gameCanvas.style.display = "block";
-    // ... Weiter mit Subway-Surfer (siehe Teil 2)
+    updateGameUI();
+  }
+  let shopReturn = "main-menu";
+  function showShop(from) {
+    SFX.button.play();
+    document.getElementById("shop").classList.add("show");
+    shopReturn = from || "main-menu";
+    const itemsDiv = document.getElementById("shop-items");
+    itemsDiv.innerHTML = "";
+    SHOP_ITEMS.forEach((item, idx) => {
+      let level = gameSettings.upgrades[item.key]||0;
+      let nextLevel = Math.min(level+1, item.max);
+      let cost = item.cost[level]||"-";
+      const btn = document.createElement("button");
+      btn.innerText = level>=item.max?"MAX":`Kaufen (${cost}💰)`;
+      btn.className = "shop-btn-buy";
+      btn.disabled = (level>=item.max)||(gameSettings.coins<cost);
+      btn.onclick = () => {
+        if (gameSettings.coins>=cost && level<item.max) {
+          gameSettings.coins -= cost;
+          gameSettings.upgrades[item.key] = nextLevel;
+          localStorage.setItem("mavisgames_settings", JSON.stringify(gameSettings));
+          showShop(shopReturn);
+        }
+      };
+      let div = document.createElement("div");
+      div.className = "shop-item";
+      div.innerHTML = `<span>${item.emoji} <b>${item.name}</b> <span style="color:#0cf">[${level}/${item.max}]</span>
+        <br><small style="color:#aaa">${item.desc}</small></span>`;
+      div.appendChild(btn);
+      itemsDiv.appendChild(div);
+    });
+    document.getElementById("shop-close-btn").onclick = () => {
+      document.getElementById("shop").classList.remove("show");
+      if (shopReturn==="main-menu") { showMainMenu(); }
+      else if (shopReturn==="char-select") { document.getElementById("char-select").classList.add("show"); }
+      else if (shopReturn==="gameover") { document.getElementById("gameover").classList.add("show"); }
+    }
+  }
+  function hideShop() { document.getElementById("shop").classList.remove("show"); }
+  function renderCharSelect() {
+    const list = document.getElementById("char-list");
+    list.innerHTML = "";
+    CHARACTERS.forEach((c, idx) => {
+      const div = document.createElement("div");
+      div.className = "char-icon" + (idx===gameSettings.player?" selected":"");
+      div.innerHTML = `<span style="font-size:40px">${c.emoji}</span>`;
+      div.onclick = () => {
+        document.querySelectorAll('.char-icon').forEach(e=>e.classList.remove('selected'));
+        div.classList.add("selected");
+        gameSettings.player = idx;
+        document.getElementById("char-info").innerHTML = `<div class='char-name'>${c.name}</div><div style="color:#aaa;font-size:15px;">${c.desc}</div>`;
+      };
+      list.appendChild(div);
+    });
+    document.getElementById("char-info").innerHTML =
+      `<div class='char-name'>${CHARACTERS[gameSettings.player].name}</div>
+       <div style="color:#aaa;font-size:15px;">${CHARACTERS[gameSettings.player].desc}</div>`;
+  }
+  function startGame() {
+    player = {
+      lane: 1,
+      y: GAME_H-110,
+      vy: 0,
+      w: 44,
+      h: 48,
+      color: CHARACTERS[gameSettings.player].color,
+      shield: (CHARACTERS[gameSettings.player].name==="Robo"?true:false),
+      lives: 1 + (gameSettings.upgrades.life || 0)
+    };
+    obstacles = [];
+    coinsArr = [];
+    powerupsArr = [];
+    runTime = 0;
+    score = 0;
+    collectedCoins = 0;
+    level = 1;
+    powerup = null;
+    powerupTimer = 0;
+    try { BGM.currentTime=0; BGM.play(); } catch(e){}
+    state = "run";
+    gameLoop();
+  }
+  function updateGameUI() {
+    document.getElementById("score").textContent = `Score: ${Math.floor(score)}`;
+    document.getElementById("coins").textContent = `💰 ${gameSettings.coins}`;
+    document.getElementById("powerup").textContent = powerup?`Aktiv: ${powerup}`:"";
+    document.getElementById("highscore").textContent = `Highscore: ${hiscore}`;
+    document.getElementById("diff-ui").innerHTML = `<span style="color:${diff.color};">${diff.label}</span>`;
+    document.getElementById("life-ui").innerHTML = "❤️".repeat(player?.lives||1);
+  }
+  function gameLoop() {
+    if (state!=="run") return;
+    ctx.clearRect(0,0,GAME_W,GAME_H);
+    drawBackground();
+    updatePlayer();
+    updateObstacles();
+    updateCoins();
+    updatePowerUps();
+    drawPlayer();
+    drawObstacles();
+    drawCoins();
+    drawPowerUps();
+    score += 1+level*0.03;
+    runTime++;
+    if (runTime%900===0) level++; // sehr langsamer Anstieg
+    updateGameUI();
+    animationFrame = requestAnimationFrame(gameLoop);
+  }
+  function pauseGame() {
+    SFX.button.play();
+    state = "pause";
+    document.getElementById("pause").classList.add("show");
+    cancelAnimationFrame(animationFrame);
+    BGM.pause();
+  }
+  function resumeGame() {
+    SFX.button.play();
+    state = "run";
+    document.getElementById("pause").classList.remove("show");
+    BGM.play();
+    gameLoop();
+  }
+  function gameOver() {
+    SFX.crash.play();
+    state = "gameover";
+    cancelAnimationFrame(animationFrame);
+    BGM.pause();
+    let stats = document.getElementById("gameover-stats");
+    stats.innerHTML = `<b>${userName}</b>, dein Score: <b>${Math.floor(score)}</b><br>Gesammelte Münzen: <b>${collectedCoins}</b><br>Schwierigkeit: <b style="color:${diff.color}">${diff.name}</b>`;
+    if (score>hiscore) {
+      stats.innerHTML += `<br><span style="color:#0f0">Neuer Highscore!</span>`;
+      hiscore = Math.floor(score);
+      gameSettings.hiscore = hiscore;
+    }
+    gameSettings.coins += Math.floor(collectedCoins * diff.coinMulti);
+    localStorage.setItem("mavisgames_settings",JSON.stringify(gameSettings));
+    addToLeaderboard(userName, Math.floor(score));
+    document.getElementById("gameover").classList.add("show");
+  }
+  function drawBackground() {
+    bgCtx.clearRect(0,0,canvasBg.width,canvasBg.height);
+    for (let i=0;i<3;i++) {
+      let y = ((runTime*runSpeed*0.1)+(i*100))%canvasBg.height;
+      bgCtx.fillStyle = ["#1e3050","#284d7a","#203c5d"][i];
+      bgCtx.fillRect(0,y,canvasBg.width,100);
+      bgCtx.fillRect(0,y-canvasBg.height,canvasBg.width,100);
+    }
+    ctx.fillStyle = "#bbb";
+    ctx.fillRect(GAME_W/8,0,GAME_W*3/4,GAME_H);
+    ctx.strokeStyle = "#eee";
+    ctx.setLineDash([21,14]);
+    for (let i = 1; i < 3; i++) {
+      ctx.beginPath();
+      ctx.moveTo(lanes[i],0);
+      ctx.lineTo(lanes[i],GAME_H);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
+  function drawPlayer() {
+    ctx.save();
+    ctx.translate(lanes[player.lane], player.y);
+    ctx.fillStyle = player.color;
+    ctx.beginPath();
+    ctx.arc(0,0,22,0,2*Math.PI);
+    ctx.fill();
+    ctx.font = "32px Arial";
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText(CHARACTERS[gameSettings.player].emoji,0,3);
+    if (player.shield) {
+      ctx.beginPath();
+      ctx.strokeStyle="#0ffb";
+      ctx.lineWidth=4;
+      ctx.arc(0,0,30,0,2*Math.PI);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function updatePlayer() {}
+  function spawnObstacle() {
+    if (Math.random()<0.75) {
+      obstacles.push({lane:Math.floor(Math.random()*3), y:-60, w:40, h:40});
+    }
+  }
+  function updateObstacles() {
+    if (runTime%diff.spawn===0) spawnObstacle();
+    for (let i=obstacles.length-1; i>=0; i--) {
+      let speedFactor = powerup==="Slowmo" ? 0.35 : 1;
+      obstacles[i].y += (diff.speed + level*0.08) * speedFactor;
+      if (Math.abs(obstacles[i].y-player.y)<32 && obstacles[i].lane===player.lane) {
+        if (player.shield) {
+          player.shield=false; obstacles.splice(i,1); SFX.crash.play();
+        } else if (player.lives > 1) {
+          player.lives--;
+          obstacles.splice(i,1);
+          SFX.crash.play();
+        } else {
+          gameOver();
+        }
+      }
+      if (obstacles[i].y>GAME_H+40) obstacles.splice(i,1);
+    }
+  }
+  function spawnCoin() {
+    if (Math.random()<diff.coin) {
+      coinsArr.push({lane:Math.floor(Math.random()*3), y:-20, w:24, h:24});
+    }
+  }
+  function updateCoins() {
+    if (runTime%30===0) spawnCoin();
+    for (let i=coinsArr.length-1; i>=0; i--) {
+      let speedFactor = powerup==="Slowmo" ? 0.35 : 1;
+      coinsArr[i].y += (diff.speed + level*0.08) * speedFactor;
+      let magnetActive = powerup==="Magnet"||powerup==="Slowmo";
+      let px = lanes[player.lane], py = player.y;
+      let cx = lanes[coinsArr[i].lane], cy = coinsArr[i].y;
+      let dist = Math.abs(cx-px)+Math.abs(cy-py);
+      if (magnetActive && dist<110) {
+        coinsArr[i].lane = player.lane;
+        coinsArr[i].y += (player.y-coinsArr[i].y)*0.15;
+      }
+      if (Math.abs(coinsArr[i].y-player.y)<26 && coinsArr[i].lane===player.lane) {
+        SFX.coin.play();
+        collectedCoins += 1+(gameSettings.upgrades.coin||0);
+        coinsArr.splice(i,1);
+      }
+      if (coinsArr[i] && coinsArr[i].y>GAME_H+30) coinsArr.splice(i,1);
+    }
+  }
+  function spawnPowerUp() {
+    if (Math.random()<0.03) {
+      let p = POWERUPS[Math.floor(Math.random()*POWERUPS.length)];
+      powerupsArr.push({lane:Math.floor(Math.random()*3), y:-40, w:38, h:38, kind:p});
+    }
+  }
+  function updatePowerUps() {
+    if (runTime%180===0) spawnPowerUp();
+    for (let i=powerupsArr.length-1; i>=0; i--) {
+      let speedFactor = powerup==="Slowmo" ? 0.35 : 1;
+      powerupsArr[i].y += (diff.speed + level*0.06) * speedFactor;
+      if (Math.abs(powerupsArr[i].y-player.y)<30 && powerupsArr[i].lane===player.lane) {
+        SFX.powerup.play();
+        powerup = powerupsArr[i].kind.name;
+        if(powerup==="Slowmo") {
+          powerupTimer = 90 + (gameSettings.upgrades.slowmo||0)*50;
+        } else {
+          powerupTimer = diff.powerup+(gameSettings.upgrades[powerupsArr[i].kind.key]||0)*65;
+        }
+        if (powerup==="Shield") player.shield=true;
+        powerupsArr.splice(i,1);
+      }
+      if (powerupsArr[i] && powerupsArr[i].y>GAME_H+40) powerupsArr.splice(i,1);
+    }
+    if (powerup) {
+      powerupTimer--;
+      if (powerupTimer<=0) {
+        powerup=null;
+        if (player) player.shield=false;
+      }
+    }
+  }
+  function drawObstacles() {
+    for (const o of obstacles) {
+      ctx.save();
+      ctx.translate(lanes[o.lane], o.y);
+      ctx.fillStyle = "#f44";
+      ctx.fillRect(-o.w/2,-o.h/2,o.w,o.h);
+      ctx.restore();
+    }
+  }
+  function drawCoins() {
+    for (const c of coinsArr) {
+      ctx.save();
+      ctx.translate(lanes[c.lane],c.y);
+      ctx.fillStyle = "#ffd700";
+      ctx.beginPath();
+      ctx.arc(0,0,12,0,2*Math.PI);
+      ctx.fill();
+      ctx.font="15px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.fillStyle="#b8860b"; ctx.fillText("💰",0,1);
+      ctx.restore();
+    }
+  }
+  function drawPowerUps() {
+    for (const p of powerupsArr) {
+      ctx.save();
+      ctx.translate(lanes[p.lane],p.y);
+      ctx.fillStyle = p.kind.color;
+      ctx.beginPath();
+      ctx.arc(0,0,18,0,2*Math.PI);
+      ctx.fill();
+      ctx.font="22px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.fillStyle="#222"; ctx.fillText(p.kind.emoji,0,2);
+      ctx.restore();
+    }
+  }
+  window.addEventListener("keydown", e => {
+    if (!inGame || state!=="run") return;
+    if (["ArrowLeft","a","A"].includes(e.key) && player.lane>0) player.lane--;
+    if (["ArrowRight","d","D"].includes(e.key) && player.lane<2) player.lane++;
+  });
+  canvasBg.addEventListener("touchstart",e=>{
+    if (!inGame || state!=="run") return;
+    touchStartX = e.touches[0].clientX;
+  });
+  canvasBg.addEventListener("touchend",e=>{
+    if (!inGame || state!=="run") return;
+    let dx = e.changedTouches[0].clientX-touchStartX;
+    if (dx<-30 && player.lane>0) player.lane--;
+    if (dx>30 && player.lane<2) player.lane++;
+  });
+  document.addEventListener("keydown",e=>{
+    if (e.key==="Escape" && inGame) {
+      BGM.pause();
+      inGame = false;
+      document.getElementById("game-ui").classList.remove("show");
+      gameCanvas.style.display = "none";
+      document.getElementById("gameover").classList.remove("show");
+      showMainMenu();
+    }
+  });
+  document.addEventListener("visibilitychange",()=>{
+    if (document.hidden && inGame && state==="run") pauseGame();
+  });
+  if ((userName||"").toLowerCase().includes("mavi") && !localStorage.getItem("mavisgames_mavi_bonus")) {
+    setTimeout(()=>{
+      alert("💙 Mavi-Bonus: 100 Coins geschenkt!");
+      gameSettings.coins += 100;
+      localStorage.setItem("mavisgames_mavi_bonus","yes");
+      localStorage.setItem("mavisgames_settings",JSON.stringify(gameSettings));
+      updateGameUI();
+    }, 1300);
   }
 
+  // Slowmo-Trank per Taste "f" aktivieren
+  document.addEventListener("keydown", e => {
+    if (!inGame || state !== "run") return;
+    if ((e.key === "f" || e.key === "F") && !powerup && (gameSettings.upgrades.slowmo || 0) > 0) {
+      powerup = "Slowmo";
+      powerupTimer = 600 + (gameSettings.upgrades.slowmo || 0) * 50; // 10 Sekunden (60 FPS * 10)
+      SFX.powerup.play();
+    }
+  });
   </script>
 </body>
 </html>
