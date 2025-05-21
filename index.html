@@ -63,6 +63,9 @@
     .diff-choice-btn:hover { background:#fff;color:#222;}
     #leaderboard-modal { background:linear-gradient(135deg,#243063 50%,#33418d 100%); min-width:320px;}
     #leaderboard-modal h2 { color:#ffd700;margin-bottom:18px;}
+    #leaderboard-modal .lb-tabs { display:flex; gap:8px; justify-content:center; margin-bottom:18px; flex-wrap:wrap;}
+    #leaderboard-modal .lb-tab { background:#222; color:#fff; border:none; border-radius:8px; padding:7px 18px; font-size:16px; cursor:pointer; transition:background 0.18s;}
+    #leaderboard-modal .lb-tab.active, #leaderboard-modal .lb-tab:hover { background:#ffd700; color:#23284a;}
     #leaderboard-table { width:100%;border-collapse:collapse;margin:0 auto 14px auto;}
     #leaderboard-table th, #leaderboard-table td { padding:7px 8px;}
     #leaderboard-table th { color:#0cf; font-size:19px;}
@@ -89,7 +92,7 @@
     <h2>Game-Auswahl</h2>
     <div class="games-list">
       <button class="game-btn" id="btn-subway">Subway Surfer</button>
-      <div><button class="game-btn" disabled>Snake</button><div class="comingsoon">Coming soon!</div></div>
+      <button class="game-btn" id="btn-snake">Snake</button>
       <div><button class="game-btn" disabled>Flappy Bird</button><div class="comingsoon">Coming soon!</div></div>
       <div><button class="game-btn" disabled>2048</button><div class="comingsoon">Coming soon!</div></div>
     </div>
@@ -104,6 +107,12 @@
   </div>
   <div id="leaderboard-modal" class="card-modal">
     <h2>🏆 Leaderboard</h2>
+    <div class="lb-tabs">
+      <button class="lb-tab" data-game="subway" data-diff="easy">Subway: Einfach</button>
+      <button class="lb-tab" data-game="subway" data-diff="hard">Subway: Schwer</button>
+      <button class="lb-tab" data-game="subway" data-diff="ultra">Subway: Ultra</button>
+      <button class="lb-tab" data-game="snake" data-diff="classic">🐍 Snake</button>
+    </div>
     <table id="leaderboard-table"></table>
     <button id="leaderboard-close-btn" style="margin-top:8px;">Schließen</button>
   </div>
@@ -154,25 +163,27 @@
   </div>
   <script>
   // --- Leaderboard Logic ---
-  function getLeaderboard() {
+  function getLeaderboard(game = "subway", diff = "easy") {
+    let key = `mavisgames_leaderboard_${game}_${diff}`;
     let lb = [];
-    try { lb = JSON.parse(localStorage.getItem("mavisgames_leaderboard")||"[]"); } catch(e){}
+    try { lb = JSON.parse(localStorage.getItem(key)||"[]"); } catch(e){}
     return Array.isArray(lb)?lb:[];
   }
-  function saveLeaderboard(lb) {
-    localStorage.setItem("mavisgames_leaderboard", JSON.stringify(lb));
+  function saveLeaderboard(lb, game = "subway", diff = "easy") {
+    let key = `mavisgames_leaderboard_${game}_${diff}`;
+    localStorage.setItem(key, JSON.stringify(lb));
   }
-  function addToLeaderboard(name, score) {
-    let lb = getLeaderboard();
+  function addToLeaderboard(name, score, game = "subway", diff = "easy") {
+    let lb = getLeaderboard(game, diff);
     let user = lb.find(e => e.name === name);
     if (!user) lb.push({name, score});
     else if (score > user.score) user.score = score;
-    saveLeaderboard(lb);
+    saveLeaderboard(lb, game, diff);
   }
-  function showLeaderboard() {
+  function showLeaderboard(game = "subway", diff = "easy") {
     const modal = document.getElementById("leaderboard-modal");
     const table = document.getElementById("leaderboard-table");
-    let lb = getLeaderboard().sort((a,b)=>b.score-a.score).slice(0,10);
+    let lb = getLeaderboard(game, diff).sort((a,b)=>b.score-a.score).slice(0,10);
     let me = userName;
     let html = `<tr><th>Platz</th><th>Name</th><th>Score</th></tr>`;
     lb.forEach((e,i)=>{
@@ -184,13 +195,24 @@
       html += `<tr class="${cls}"><td>${i+1}</td><td>${e.name}</td><td>${e.score}</td></tr>`;
     });
     if(lb.findIndex(e=>e.name===me)===-1) {
-      let myScore = getLeaderboard().find(e=>e.name===me)?.score || 0;
+      let myScore = getLeaderboard(game, diff).find(e=>e.name===me)?.score || 0;
       html += `<tr class="me"><td>-</td><td>${me}</td><td>${myScore}</td></tr>`;
     }
     table.innerHTML = html;
     modal.classList.add("show");
   }
-  document.getElementById("mainmenu-leaderboard-btn").onclick = showLeaderboard;
+  // Tabs-Logik
+  document.querySelectorAll('.lb-tab').forEach(btn=>{
+    btn.onclick = ()=>{
+      document.querySelectorAll('.lb-tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      showLeaderboard(btn.dataset.game, btn.dataset.diff);
+    }
+  });
+  // Default-Tab beim Öffnen
+  document.getElementById("mainmenu-leaderboard-btn").onclick = ()=>{
+    document.querySelector('.lb-tab[data-game="subway"][data-diff="easy"]').click();
+  };
   document.getElementById("leaderboard-close-btn").onclick = ()=>document.getElementById("leaderboard-modal").classList.remove("show");
 
   // --- Name, Menu, Difficulty ---
@@ -214,6 +236,7 @@
   const nameForm = document.getElementById("name-form");
   const gameSelectMenu = document.getElementById("gameselect-menu");
   const btnSubway = document.getElementById("btn-subway");
+  const btnSnake = document.getElementById("btn-snake");
   const diffModal = document.getElementById("diff-modal");
   const gameCanvas = document.getElementById("game-canvas");
   const canvasBg = document.getElementById("canvas-bg");
@@ -257,6 +280,11 @@
     inGame = true;
     gameSelectMenu.classList.remove("show");
     showDiffOverlay();
+  };
+  btnSnake.onclick = () => {
+    inGame = true;
+    gameSelectMenu.classList.remove("show");
+    startSnakeGame();
   };
   mainMenuUser.onclick = () => showNameModal(true);
   mainMenuUser.style.textDecoration = "underline";
@@ -450,6 +478,47 @@
     state = "run";
     gameLoop();
   }
+  const SNAKE_SKINS = [
+    { name: "Classic", color: "#0f0", emoji: "🟩" },
+    { name: "Mavi", color: "#0cf", emoji: "💙" },
+    { name: "Gold", color: "#ffd700", emoji: "⭐" },
+    { name: "Ghost", color: "#fff", emoji: "👻" }
+  ];
+  let snakeSkin = 0;
+
+  function startSnakeGame() {
+    // Zeige Skin-Auswahl
+    showSnakeSkinSelect();
+  }
+  function showSnakeSkinSelect() {
+    // Modal für Skinauswahl (du kannst das schöner machen)
+    let html = `<div id="snake-skin-modal" class="card-modal show">
+      <h2>Wähle deinen Snake-Skin</h2>
+      <div style="display:flex;gap:18px;justify-content:center;">`;
+    SNAKE_SKINS.forEach((s, i) => {
+      html += `<div class="char-icon${i===snakeSkin?" selected":""}" style="background:${s.color};" onclick="selectSnakeSkin(${i})">${s.emoji}</div>`;
+    });
+    html += `</div>
+      <button onclick="startSnake()">Start</button>
+      <button onclick="closeSnakeSkinModal()">Zurück</button>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', html);
+  }
+  window.selectSnakeSkin = function(i) {
+    snakeSkin = i;
+    document.querySelectorAll('#snake-skin-modal .char-icon').forEach((el,idx)=>el.classList.toggle('selected', idx===i));
+  };
+  window.closeSnakeSkinModal = function() {
+    document.getElementById('snake-skin-modal').remove();
+    showMainMenu();
+  };
+  window.startSnake = function() {
+    document.getElementById('snake-skin-modal').remove();
+    // Hier Snake-Game starten (Canvas, Steuerung, Score, etc.)
+    // Nach Game Over: addToLeaderboard(userName, score, "snake", "classic");
+    addToLeaderboard(userName, score, "snake", "classic");
+  };
+
   function updateGameUI() {
     document.getElementById("score").textContent = `Score: ${Math.floor(score)}`;
     document.getElementById("coins").textContent = `💰 ${gameSettings.coins}`;
